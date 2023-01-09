@@ -2,6 +2,7 @@ from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pandas as pd
+import matplotlib.pyplot as plt
 
 newsURL = "https://finviz.com/quote.ashx?t="
 
@@ -10,7 +11,7 @@ for ii in range(numEntries):
     company = input("Enter the company ticker :")
     tickers.append(company)'''
 
-tickers = ['AMZN', 'TSLA', 'GOOGL']
+tickers = ['AMZN','GOOGL']
 
 news_tables = {}
 for ticker in tickers:
@@ -25,7 +26,6 @@ for ticker in tickers:
     #we will fill our dictionary with the conents of this table
     news_table = html.find(id = 'news-table')
     news_tables[ticker] = news_table
-    break
 
 data = []
 
@@ -51,4 +51,13 @@ score_calc = lambda news: vader.polarity_scores(news)['compound']
 
 dataframe['compound'] = dataframe['news'].apply(score_calc)
 
-print(dataframe.head())
+dataframe['date'] = pd.to_datetime(dataframe.date).dt.date
+
+plt.figure(figsize=(10,8))
+
+plot_df = dataframe.groupby(['ticker','date']).mean()
+plot_df = plot_df.unstack()
+plot_df = plot_df.xs('compound', axis = "columns").transpose()
+
+plot_df.plot(kind='bar')
+plt.show()
